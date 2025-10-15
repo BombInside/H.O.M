@@ -27,19 +27,19 @@ jobs:
 
       - name: 🐍 Build backend image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/hom-backend:latest ./backend
+          docker build -t ghcr.io/bombinside/hom-backend:latest ./backend
 
       - name: 📤 Push backend image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/hom-backend:latest
+          docker push ghcr.io/bombinside/hom-backend:latest
 
       - name: 💻 Build frontend image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/hom-frontend:latest ./frontend
+          docker build -t ghcr.io/bombinside/hom-frontend:latest ./frontend
 
       - name: 📤 Push frontend image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/hom-frontend:latest
+          docker push ghcr.io/bombinside/hom-frontend:latest
 
       - name: ✅ Deployment complete
-        run: echo "🎉 Docker images for backend and frontend successfully pushed to GHCR!"
+        run: echo "🎉 Docker images successfully pushed to GHCR!"
