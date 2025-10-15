@@ -1,4 +1,5 @@
 ![CI](https://github.com/BombInside/H.O.M/actions/workflows/ci.yml/badge.svg)
+![CD](https://github.com/BombInside/H.O.M/actions/workflows/cd.yml/badge.svg)
 
 # H.O.M — History Of Machines
 
