@@ -1,4 +1,4 @@
-name: 📦 Attach Release Assets (ZIP build)
+name: 📦 Attach Release Assets (ZIP + SHA256)
 
 on:
   release:
@@ -32,12 +32,20 @@ jobs:
           cd build
           zip -r "../history-of-machines-${{ steps.get_version.outputs.version }}.zip" .
 
-      - name: 📤 Upload Release Asset
+      - name: 🔐 Generate SHA256 checksum
+        run: |
+          sha256sum "history-of-machines-${{ steps.get_version.outputs.version }}.zip" > "history-of-machines-${{ steps.get_version.outputs.version }}.sha256"
+          echo "✅ SHA256 generated:"
+          cat "history-of-machines-${{ steps.get_version.outputs.version }}.sha256"
+
+      - name: 📤 Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: history-of-machines-${{ steps.get_version.outputs.version }}.zip
+          files: |
+            history-of-machines-${{ steps.get_version.outputs.version }}.zip
+            history-of-machines-${{ steps.get_version.outputs.version }}.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: ✅ Done
-        run: echo "🎉 Release asset history-of-machines-${{ steps.get_version.outputs.version }}.zip uploaded successfully!"
+        run: echo "🎉 Release assets (.zip and .sha256) uploaded successfully!"
