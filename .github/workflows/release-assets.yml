@@ -1,0 +1,43 @@
+name: 📦 Attach Release Assets (ZIP build)
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-archive:
+    name: 🧰 Package source code into release asset
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🧩 Extract version from tag
+        id: get_version
+        run: |
+          version=${GITHUB_REF#refs/tags/}
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "Detected version: ${version}"
+
+      - name: 🧱 Prepare build directory
+        run: |
+          mkdir -p build
+          cp -r backend frontend docker-compose.yml README.md LICENSE Makefile .env.example docs assets build/ || true
+
+      - name: 🗜️ Create ZIP archive
+        run: |
+          cd build
+          zip -r "../history-of-machines-${{ steps.get_version.outputs.version }}.zip" .
+
+      - name: 📤 Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: history-of-machines-${{ steps.get_version.outputs.version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✅ Done
+        run: echo "🎉 Release asset history-of-machines-${{ steps.get_version.outputs.version }}.zip uploaded successfully!"
