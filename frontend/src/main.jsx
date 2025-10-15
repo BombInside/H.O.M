@@ -1,1 +1,12 @@
-import React from 'react'; import { createRoot } from 'react-dom/client'; createRoot(document.getElementById('root')).render(<div>HOM v0.4</div>)
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./i18n";
+import App from "./pages/App";
+import CssBaseline from "@mui/material/CssBaseline";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <CssBaseline />
+    <App />
+  </React.StrictMode>
+);
