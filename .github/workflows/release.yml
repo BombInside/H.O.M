@@ -1,0 +1,63 @@
+name: 🏷️ Auto Changelog & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Триггер при каждом теге версии
+
+jobs:
+  release:
+    name: 🚀 Generate changelog and create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🧮 Extract tag name
+        id: get_tag
+        run: |
+          tag_name="${GITHUB_REF#refs/tags/}"
+          echo "tag_name=${tag_name}" >> $GITHUB_OUTPUT
+
+      - name: 🧰 Generate changelog section
+        id: changelog
+        run: |
+          echo "## ${{ steps.get_tag.outputs.tag_name }} ($(date +'%Y-%m-%d'))" > tmp_changelog.md
+          echo "" >> tmp_changelog.md
+          git log $(git describe --tags --abbrev=0 --exclude="${{ steps.get_tag.outputs.tag_name }}")..HEAD --pretty=format:"- %s" >> tmp_changelog.md
+          echo "" >> tmp_changelog.md
+          cat tmp_changelog.md
+
+      - name: 📝 Update CHANGELOG.md
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            cat tmp_changelog.md CHANGELOG.md > tmp && mv tmp CHANGELOG.md
+          else
+            mv tmp_changelog.md CHANGELOG.md
+          fi
+
+      - name: 💾 Commit changelog update
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add CHANGELOG.md
+          git commit -m "Update CHANGELOG for ${{ steps.get_tag.outputs.tag_name }}"
+          git push origin HEAD:main
+
+      - name: 🏷️ Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag_name }}
+          name: "Release ${{ steps.get_tag.outputs.tag_name }}"
+          body_path: tmp_changelog.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✅ Done
+        run: echo "🎉 Release ${{ steps.get_tag.outputs.tag_name }} published successfully!"
