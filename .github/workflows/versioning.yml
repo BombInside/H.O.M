@@ -1,0 +1,65 @@
+name: 🔖 Auto Version Tagging
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-and-push:
+    name: 🧩 Generate version and push images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🧮 Determine version
+        id: version
+        run: |
+          # Получаем последнюю версию из тегов Git, если нет — начинаем с v0.4.1
+          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.4.1")
+          echo "Последний тег: $last_tag"
+
+          # Извлекаем цифры и увеличиваем patch-версию
+          base=${last_tag#v}
+          IFS='.' read -r major minor patch <<<"$base"
+          patch=$((patch + 1))
+          new_tag="v${major}.${minor}.${patch}"
+
+          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+          echo "Создан новый тег: $new_tag"
+
+      - name: 🏷️ Create new Git tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag ${{ steps.version.outputs.new_tag }}
+          git push origin ${{ steps.version.outputs.new_tag }}
+
+      - name: 🔑 Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Build and push backend image
+        run: |
+          docker build -t ghcr.io/bombinside/hom-backend:latest ./backend
+          docker tag ghcr.io/bombinside/hom-backend:latest ghcr.io/bombinside/hom-backend:${{ steps.version.outputs.new_tag }}
+          docker push ghcr.io/bombinside/hom-backend:latest
+          docker push ghcr.io/bombinside/hom-backend:${{ steps.version.outputs.new_tag }}
+
+      - name: 💻 Build and push frontend image
+        run: |
+          docker build -t ghcr.io/bombinside/hom-frontend:latest ./frontend
+          docker tag ghcr.io/bombinside/hom-frontend:latest ghcr.io/bombinside/hom-frontend:${{ steps.version.outputs.new_tag }}
+          docker push ghcr.io/bombinside/hom-frontend:latest
+          docker push ghcr.io/bombinside/hom-frontend:${{ steps.version.outputs.new_tag }}
+
+      - name: ✅ Done
+        run: echo "🎉 Tagged and published ${{ steps.version.outputs.new_tag }} successfully!"
